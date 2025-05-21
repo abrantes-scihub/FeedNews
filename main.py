@@ -3,7 +3,7 @@ import requests
 import os
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
-RSS_FEED_URL = "https://nitter.net/talesabrantes/lists/1324465914159505414/rss"
+RSS_FEED_URL = "https://nitter.net/TalesAbrantes/lists/1324465914159505414/rss"
 
 def check_rss():
     feed = feedparser.parse(RSS_FEED_URL)
