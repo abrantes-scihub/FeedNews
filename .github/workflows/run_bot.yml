@@ -1,4 +1,4 @@
-- name: Verify Secret
+name: Verify Secret
   run: |
     if [ -z "$DISCORD_WEBHOOK" ]; then
       echo "❌ ERROR: DISCORD_WEBHOOK is empty!"
