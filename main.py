@@ -7,7 +7,7 @@ def log(message):
     print(message, file=sys.stderr)
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
-RSS_FEED_URL = "https://nitter.it/i/lists/1324465914159505414"  # Using reliable instance
+RSS_FEED_URL = "https://nitter.it/TalesAbrantes/lists/1324465914159505414/rss"  # Using reliable instance
 
 log("=== STARTING ===")
 
