@@ -1,37 +1,22 @@
-name: Twitter List to Discord
+name: Twitter-to-Discord Webhook
+
 on:
   schedule:
-    - cron: "*/10 * * * *"  # Every 10 minutes
-  workflow_dispatch:
+    - cron: "*/5 * * * *"  # Runs every 5 minutes
+  workflow_dispatch:  # Allow manual runs
 
 jobs:
-  post-tweets:
+  run-bot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v2
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
-      
+          python-version: "3.9"
       - name: Install dependencies
         run: pip install feedparser requests
-      
-      - name: Run bot with full logging
+      - name: Run script
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: |
-          # Print first/last chars of webhook for verification
-          echo "Webhook exists: ${#DISCORD_WEBHOOK} chars"
-          echo "Starts with: ${DISCORD_WEBHOOK:0:25}"
-          echo "Ends with: ${DISCORD_WEBHOOK: -10}"
-          
-          # Run script and capture all output
-          python main.py 2>&1 | tee -a bot.log
-          
-          # Show feed health check
-          echo -e "\n=== FEED HEALTH CHECK ==="
-          curl -s "https://nitter.net/i/lists/1324465914159505414/rss" | \
-            grep -E "<title>|<link>" | head -4 || \
-            echo "Failed to fetch feed"
+        run: python main.py
