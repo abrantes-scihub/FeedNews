@@ -4,43 +4,54 @@ import os
 import sys
 
 def log(message):
-    print(message, file=sys.stderr)
+    print(message, file=sys.stderr, flush=True)  # flush ensures immediate output
 
+# Configuration
+LIST_ID = "1324465914159505414"
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
-RSS_FEED_URL = "https://nitter.it/TalesAbrantes/lists/1324465914159505414/rss"  # Using reliable instance
+NITTER_INSTANCE = "https://nitter.net"  # Primary instance
+FALLBACK_INSTANCE = "https://nitter.it"  # Backup if primary fails
 
-log("=== STARTING ===")
+def get_feed_url(instance):
+    return f"{instance}/i/lists/{LIST_ID}/rss"
 
-try:
-    # 1. Fetch feed
-    log("Fetching RSS feed...")
-    feed = feedparser.parse(RSS_FEED_URL)
+def send_to_discord(content):
+    try:
+        response = requests.post(
+            WEBHOOK_URL,
+            json={"content": content},
+            timeout=10
+        )
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        log(f"Discord post failed: {str(e)}")
+        return False
+
+def process_feed(feed_url):
+    log(f"Fetching {feed_url}")
+    feed = feedparser.parse(feed_url)
     
     if feed.bozo:
-        log(f"⚠️ Feed error: {feed.bozo_exception}")
-    else:
-        log(f"Found {len(feed.entries)} tweets")
-        
-        # 2. Process newest 3 tweets
-        for entry in feed.entries[:3]:
-            tweet_text = entry.title.split('http')[0]  # Remove any URLs from text
-            message = f"🐦 **New Tweet**\n{tweet_text}\n🔗 {entry.link}"
-            
-            log(f"Posting: {tweet_text[:50]}...")
-            
-            # 3. Send to Discord
-            try:
-                response = requests.post(
-                    WEBHOOK_URL,
-                    json={"content": message},
-                    timeout=10
-                )
-                response.raise_for_status()
-                log("✅ Posted successfully")
-            except Exception as e:
-                log(f"❌ Failed to post: {str(e)}")
+        log(f"Feed error: {feed.bozo_exception}")
+        return False
+    
+    if not feed.entries:
+        log("No tweets found in feed")
+        return False
+    
+    latest = feed.entries[0]
+    message = f"**New Tweet**\n{latest.title}\n🔗 {latest.link}"
+    
+    log(f"Posting: {latest.link}")
+    return send_to_discord(message)
 
-except Exception as e:
-    log(f"🔥 Critical error: {str(e)}")
-
-log("=== FINISHED ===")
+if __name__ == "__main__":
+    log("\n=== STARTING RUN ===")
+    
+    # Try primary instance first
+    if not process_feed(get_feed_url(NITTER_INSTANCE)):
+        log("Trying fallback instance...")
+        process_feed(get_feed_url(FALLBACK_INSTANCE))
+    
+    log("=== RUN COMPLETE ===")
